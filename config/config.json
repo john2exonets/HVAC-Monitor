@@ -1,0 +1,11 @@
+{
+  "username": "john@my.io",
+  "password": "password",
+  "devices": [
+    {"name": "Center", "dispName": "Central HVAC", "id": "1234567"},
+    {"name": "West", "dispName": "West HVAC", "id": "2222222"},
+    {"name": "East", "dispName": "East HVAC", "id": "3333333"}
+  ],
+  "period": 180000,
+  "debug": 10
+}
