@@ -9,3 +9,4 @@ The Honeywell Total Comfort Portal does seem to have a limit of one login every 
 
 I have also provided another example program that sets the Heat temperature setpoint, and turns the Heat mode on.  There is also a way to turn the fan on/off/auto, but I didn't mess with that, so its not part of the module...but should not be hard to add. Maybe one day I'll come back and add that.
 
+I wrote about this on my blog: https://diysmarthome.io/2020/03/control-honeywell-tc-thermostats-using-mqtt/ 
