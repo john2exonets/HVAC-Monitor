@@ -114,10 +114,12 @@ function turnHeatON(devId) {
     if (n.id == devId) {
       htc.setDeviceMode(n.id, htc.HEAT).then((out) => {
         if (out.success == 1) {
-          console.log("Changes were successful.");
+          if (DEBUG) { console.log("Changes were successful."); }
         } else {
-          console.log("setDeviceMode(): Failed");
-          console.log(JSON.stringify(out));
+          if (DEBUG) {
+            console.log("setDeviceMode(): Failed");
+            console.log(JSON.stringify(out));
+          }
         }
       }).catch((err) => {
         console.log(err);
@@ -131,10 +133,12 @@ function turnCoolON(devId) {
     if (n.id == devId) {
       htc.setDeviceMode(n.id, htc.COOL).then((out) => {
         if (out.success == 1) {
-          console.log("Changes were successful.");
+          if (DEBUG) { console.log("Changes were successful."); }
         } else {
-          console.log("setDeviceMode(): Failed");
-          console.log(JSON.stringify(out));
+          if (DEBUG) {
+            console.log("setDeviceMode(): Failed");
+            console.log(JSON.stringify(out));
+          }
         }
       }).catch((err) => {
         console.log(err);
@@ -147,10 +151,12 @@ function turnAllHeatON() {
   config.devices.forEach((n) => {
     htc.setDeviceMode(n.id, htc.HEAT).then((out) => {
       if (out.success == 1) {
-        console.log("Changes were successful.");
+        if (DEBUG) { console.log("Changes were successful."); }
       } else {
-        console.log("setDeviceMode(): Failed");
-        console.log(JSON.stringify(out));
+        if (DEBUG) {
+          console.log("setDeviceMode(): Failed");
+          console.log(JSON.stringify(out));
+        }
       }
     }).catch((err) => {
       console.log(err);
@@ -162,10 +168,12 @@ function turnAllCoolON() {
   config.devices.forEach((n) => {
     htc.setDeviceMode(n.id, htc.COOL).then((out) => {
       if (out.success == 1) {
-        console.log("Changes were successful.");
+        if (DEBUG) { console.log("Changes were successful."); }
       } else {
-        console.log("setDeviceMode(): Failed");
-        console.log(JSON.stringify(out));
+        if (DEBUG) {
+          console.log("setDeviceMode(): Failed");
+          console.log(JSON.stringify(out));
+        }
       }
     }).catch((err) => {
       console.log(err);
