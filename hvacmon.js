@@ -18,6 +18,10 @@ var copts = {
   clientId: "hvacmon",
   keepalive: 5000
 };
+var topics = [
+  'hvac/heat/on',
+  'hvac/cool/on'
+];
 
 var opts = {
   "User": config.username,
@@ -31,7 +35,27 @@ var opts = {
 var client = mqtt.connect(BROKER, copts);
 
 client.on("connect", function() {
-  // ** Do Nothing; Here in case we want to monitor the MQTT bus.
+  client.subscribe(topics);
+});
+
+client.on('message', function(topic, message) {
+  var out = topic + ": " + message.toString();
+  if (DEBUG) { console.log(Date() + ":" + out); }
+
+  // Check for bad data
+  if (message.indexOf("nan") > 0) {
+    if (DEBUG) { console.log(">> BAD DATA"); }
+    return false;
+  }
+
+  var tt = topic.split('/');
+  if (tt[1] == "heat") {
+    turnAllHeatON();
+  }
+  if (tt[1] == "cool") {
+    turnAllCoolON();
+  }
+
 });
 
 //---------------------------------------------------------------------------
@@ -83,6 +107,70 @@ function pubDevicesStatus() {
   });
 
   setTimeout(pubDevicesStatus, config.period);     // publish every x minutes
+}
+
+function turnHeatON(devId) {
+  config.devices.forEach((n) => {
+    if (n.id == devId) {
+      htc.setDeviceMode(n.id, htc.HEAT).then((out) => {
+        if (out.success == 1) {
+          console.log("Changes were successful.");
+        } else {
+          console.log("setDeviceMode(): Failed");
+          console.log(JSON.stringify(out));
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
+    }
+  });
+}
+
+function turnCoolON(devId) {
+  config.devices.forEach((n) => {
+    if (n.id == devId) {
+      htc.setDeviceMode(n.id, htc.COOL).then((out) => {
+        if (out.success == 1) {
+          console.log("Changes were successful.");
+        } else {
+          console.log("setDeviceMode(): Failed");
+          console.log(JSON.stringify(out));
+        }
+      }).catch((err) => {
+        console.log(err);
+      });
+    }
+  });
+}
+
+function turnAllHeatON() {
+  config.devices.forEach((n) => {
+    htc.setDeviceMode(n.id, htc.HEAT).then((out) => {
+      if (out.success == 1) {
+        console.log("Changes were successful.");
+      } else {
+        console.log("setDeviceMode(): Failed");
+        console.log(JSON.stringify(out));
+      }
+    }).catch((err) => {
+      console.log(err);
+    });
+  });
+}
+
+function turnAllCoolON() {
+  config.devices.forEach((n) => {
+    htc.setDeviceMode(n.id, htc.COOL).then((out) => {
+      if (out.success == 1) {
+        console.log("Changes were successful.");
+      } else {
+        console.log("setDeviceMode(): Failed");
+        console.log(JSON.stringify(out));
+      }
+    }).catch((err) => {
+      console.log(err);
+    });
+  });
 }
 
 //----------------------------------------------------------------------------
