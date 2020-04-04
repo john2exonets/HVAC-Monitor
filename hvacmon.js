@@ -9,9 +9,7 @@ var HoneywellTotalComfort = require('./lib/honeywelltc.js');
 var config = require('./config/config.json');
 var mqtt = require('mqtt');
 
-const BROKER = "http://10.1.1.28";
-const BASETOPIC = "temp/read/hvac/";
-var DEBUG = true;
+var DEBUG = config.debug;
 
 // MQTT connection options
 var copts = {
@@ -32,7 +30,7 @@ var opts = {
 //---------------------------------------------------------------------------
 // MQTT Stuff
 //---------------------------------------------------------------------------
-var client = mqtt.connect(BROKER, copts);
+var client = mqtt.connect(config.mqttBroker, copts);
 
 client.on("connect", function() {
   client.subscribe(topics);
@@ -40,11 +38,11 @@ client.on("connect", function() {
 
 client.on('message', function(topic, message) {
   var out = topic + ": " + message.toString();
-  if (DEBUG) { console.log(Date() + ":" + out); }
+  if (DEBUG > 8) { console.log(Date() + ":" + out); }
 
   // Check for bad data
   if (message.indexOf("nan") > 0) {
-    if (DEBUG) { console.log(">> BAD DATA"); }
+    if (DEBUG > 8) { console.log(">> BAD DATA"); }
     return false;
   }
 
@@ -62,6 +60,8 @@ client.on('message', function(topic, message) {
 // Honeywell TC Stuff
 //---------------------------------------------------------------------------
 var htc = new HoneywellTotalComfort(opts);
+var cntCool;
+var cntHeat;
 
 function pubDevicesStatus() {
   config.devices.forEach((n) => {
@@ -69,34 +69,64 @@ function pubDevicesStatus() {
       // console.log("----------------------------");
       // console.log("Name: " + n.name)
       // console.log("Temp = " + rr.latestData.uiData.DispTemperature);
-      var topic = BASETOPIC + n.name;
+      var topic = config.baseTopic + n.name;
       var out = '{"unit":"' + n.name +'", "temp":';
       out += rr.latestData.uiData.DispTemperature.toString() + ', "mode":';
       switch (rr.latestData.uiData.SystemSwitchPosition) {
-        case 1:
-          out += '"heat", ';
+        case 1:  // HEAT
+          //
+          //  Auto-Cool Feature
+          if (rr.latestData.uiData.DispTemperature >= config.startCool) {
+            cntCool++;
+            if (cntCool == 3) {  // if after three times in a row...
+              if (DEBUG > 8) { console.log(">>Auto-Cool turned on for unit " + n.name); }
+              cntCool = 0;
+              turnCoolON(n.id);
+              out += '"cool", ';
+            } else {
+              out += '"heat", ';
+            }
+          } else {
+            cntCool = 0;
+            out += '"heat", ';
+          }
           break;
-        case 2:
+        case 2:  // OFF
           out += '"off", ';
           break;
-        case 3:
-          out += '"cool", ';
+        case 3:  //  COOL
+          //
+          //  Auto-Heat Feature
+          if (rr.latestData.uiData.DispTemperature <= config.startHeat) {
+            cntHeat++;
+            if (cntHeat == 3) {   // if after three times in a row...
+              if (DEBUG > 8) { console.log(">>Auto-Heat turned on for unit " + n.name); }
+              cntHeat = 0;
+              turnHeatON(n.id);
+              out += '"heat", ';
+            } else {
+              out += '"cool", ';
+            }
+          } else {
+            cntHeat = 0;
+            out += '"cool", ';
+          }
           break;
-        case 4:
+        case 4:  //  AUTO
           out += '"auto", ';
           break;
-        default:
+        default:  //  UNKNOWN
           out += '"---", ';
       }
       out += '"fan":';
       if (rr.latestData.fanData.fanIsRunning) {
         out += '"on" }';
-        if (DEBUG) { console.log(out); }
+        if (DEBUG > 8) { console.log(out); }
         client.publish(topic, out);
         // console.log("Fan is Running");
       } else {
         out += '"off" }';
-        if (DEBUG) { console.log(out); }
+        if (DEBUG > 8) { console.log(out); }
         client.publish(topic, out);
         // console.log("Fan is Not Running");
       }
@@ -114,12 +144,10 @@ function turnHeatON(devId) {
     if (n.id == devId) {
       htc.setDeviceMode(n.id, htc.HEAT).then((out) => {
         if (out.success == 1) {
-          if (DEBUG) { console.log("Changes were successful."); }
+          if (DEBUG > 5) { console.log("Changes were successful."); }
         } else {
-          if (DEBUG) {
-            console.log("setDeviceMode(): Failed");
-            console.log(JSON.stringify(out));
-          }
+          console.log("setDeviceMode(): Failed");
+          if (DEBUG > 5) { console.log(JSON.stringify(out)); }
         }
       }).catch((err) => {
         console.log(err);
@@ -133,12 +161,10 @@ function turnCoolON(devId) {
     if (n.id == devId) {
       htc.setDeviceMode(n.id, htc.COOL).then((out) => {
         if (out.success == 1) {
-          if (DEBUG) { console.log("Changes were successful."); }
+          if (DEBUG > 5) { console.log("Changes were successful."); }
         } else {
-          if (DEBUG) {
-            console.log("setDeviceMode(): Failed");
-            console.log(JSON.stringify(out));
-          }
+          console.log("setDeviceMode(): Failed");
+          if (DEBUG > 5) { console.log(JSON.stringify(out)); }
         }
       }).catch((err) => {
         console.log(err);
@@ -151,12 +177,10 @@ function turnAllHeatON() {
   config.devices.forEach((n) => {
     htc.setDeviceMode(n.id, htc.HEAT).then((out) => {
       if (out.success == 1) {
-        if (DEBUG) { console.log("Changes were successful."); }
+        if (DEBUG > 5) { console.log("Changes were successful."); }
       } else {
-        if (DEBUG) {
-          console.log("setDeviceMode(): Failed");
-          console.log(JSON.stringify(out));
-        }
+        console.log("setDeviceMode(): Failed");
+        if (DEBUG > 5) { console.log(JSON.stringify(out)); }
       }
     }).catch((err) => {
       console.log(err);
@@ -168,12 +192,10 @@ function turnAllCoolON() {
   config.devices.forEach((n) => {
     htc.setDeviceMode(n.id, htc.COOL).then((out) => {
       if (out.success == 1) {
-        if (DEBUG) { console.log("Changes were successful."); }
+        if (DEBUG > 5) { console.log("Changes were successful."); }
       } else {
-        if (DEBUG) {
-          console.log("setDeviceMode(): Failed");
-          console.log(JSON.stringify(out));
-        }
+        console.log("setDeviceMode(): Failed");
+        if (DEBUG > 5) { console.log(JSON.stringify(out)); }
       }
     }).catch((err) => {
       console.log(err);

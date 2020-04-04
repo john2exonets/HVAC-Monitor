@@ -1,11 +1,15 @@
 {
   "username": "john@my.io",
   "password": "password",
+  "mqttBroker": "http://10.1.1.28",
+  "baseTopic": "temp/read/hvac/",
   "devices": [
     {"name": "Center", "dispName": "Central HVAC", "id": "1234567"},
     {"name": "West", "dispName": "West HVAC", "id": "2222222"},
     {"name": "East", "dispName": "East HVAC", "id": "3333333"}
   ],
   "period": 180000,
+  "startCool": 76,
+  "startHeat": 73,
   "debug": 10
 }
