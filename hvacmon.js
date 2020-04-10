@@ -60,8 +60,12 @@ client.on('message', function(topic, message) {
 // Honeywell TC Stuff
 //---------------------------------------------------------------------------
 var htc = new HoneywellTotalComfort(opts);
-var cntCool;
-var cntHeat;
+var cntCool = {};
+var cntHeat = {};
+config.devices.forEach((n) => {
+  cntCool[n.id] = 0;
+  cntHeat[n.id] = 0;
+});
 
 function pubDevicesStatus() {
   config.devices.forEach((n) => {
@@ -77,17 +81,17 @@ function pubDevicesStatus() {
           //
           //  Auto-Cool Feature
           if (rr.latestData.uiData.DispTemperature >= config.startCool) {
-            cntCool++;
-            if (cntCool == 3) {  // if after three times in a row...
+            cntCool[n.id]++;
+            if (cntCool[n.id] == 3) {  // if after three times in a row...
               if (DEBUG > 8) { console.log(">>Auto-Cool turned on for unit " + n.name); }
-              cntCool = 0;
+              cntCool[n.id] = 0;
               turnCoolON(n.id);
               out += '"cool", ';
             } else {
               out += '"heat", ';
             }
           } else {
-            cntCool = 0;
+            cntCool[n.id] = 0;
             out += '"heat", ';
           }
           break;
@@ -98,17 +102,17 @@ function pubDevicesStatus() {
           //
           //  Auto-Heat Feature
           if (rr.latestData.uiData.DispTemperature <= config.startHeat) {
-            cntHeat++;
-            if (cntHeat == 3) {   // if after three times in a row...
+            cntHeat[n.id]++;
+            if (cntHeat[n.id] == 3) {   // if after three times in a row...
               if (DEBUG > 8) { console.log(">>Auto-Heat turned on for unit " + n.name); }
-              cntHeat = 0;
+              cntHeat[n.id] = 0;
               turnHeatON(n.id);
               out += '"heat", ';
             } else {
               out += '"cool", ';
             }
           } else {
-            cntHeat = 0;
+            cntHeat[n.id] = 0;
             out += '"cool", ';
           }
           break;
